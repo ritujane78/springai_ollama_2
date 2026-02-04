@@ -1,13 +1,10 @@
 package com.jane.springaiintro.service;
 
-import com.jane.springaiintro.model.Answer;
-import com.jane.springaiintro.model.GetCapitalRequest;
-import com.jane.springaiintro.model.GetCapitalResponse;
-import com.jane.springaiintro.model.Question;
+import com.jane.springaiintro.model.*;
 
 public interface OllamaAIService {
     String getAnswer(String message);
     Answer getAnswer(Question question);
     Answer getCapital(GetCapitalRequest request);
-    Answer getCapitalWithInfo(GetCapitalRequest request);
+    GetCapitalWithInfoResponse getCapitalWithInfo(GetCapitalRequest request);
 }

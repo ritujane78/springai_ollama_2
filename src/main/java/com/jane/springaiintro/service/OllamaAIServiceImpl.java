@@ -1,10 +1,7 @@
 package com.jane.springaiintro.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.jane.springaiintro.model.Answer;
-import com.jane.springaiintro.model.GetCapitalRequest;
-import com.jane.springaiintro.model.GetCapitalResponse;
-import com.jane.springaiintro.model.Question;
+import com.jane.springaiintro.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
@@ -80,12 +77,39 @@ public class OllamaAIServiceImpl implements OllamaAIService {
 //        return new Answer(response.getResult().getOutput().getText());
     }
 
+//    @Override
+//    public Answer getCapitalWithInfo(GetCapitalRequest request) {
+//        PromptTemplate promptTemplate = new PromptTemplate(promptTemplateInfoResource);
+//        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", request.stateOrCountry()));
+//        ChatResponse response = chatModel.call(prompt);
+//
+//        return new Answer(response.getResult().getOutput().getText());
+//    }
     @Override
-    public Answer getCapitalWithInfo(GetCapitalRequest request) {
+    public GetCapitalWithInfoResponse getCapitalWithInfo(GetCapitalRequest request) {
+//        BeanOutputConverter<GetCapitalWithInfoResponse> converter = new BeanOutputConverter<>(GetCapitalWithInfoResponse.class);
+//        String format = converter.getFormat();
         PromptTemplate promptTemplate = new PromptTemplate(promptTemplateInfoResource);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", request.stateOrCountry()));
-        ChatResponse response = chatModel.call(prompt);
+        Prompt prompt = promptTemplate.create(
+                Map.of("stateOrCountry", request.stateOrCountry())
+        );
 
-        return new Answer(response.getResult().getOutput().getText());
+        ChatResponse response = chatModel.call(prompt);
+        String raw = response.getResult().getOutput().getText();
+        logger.info("LLM raw response: {}", raw);
+
+        JsonNode root = objectMapper.readTree(raw);
+
+//        return converter.convert(Objects.requireNonNull(response.getResult().getOutput().getText()));
+        return new GetCapitalWithInfoResponse(
+                root.path("city").asText(null),
+                root.path("population").isMissingNode()
+                        ? null
+                        : root.path("population").asInt(), // handles "181011" safely
+                root.path("region").asText(null),
+                root.path("language").asText(null),
+                root.path("currency").asText(null)
+        );
     }
+
 }

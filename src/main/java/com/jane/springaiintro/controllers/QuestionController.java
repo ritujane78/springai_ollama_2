@@ -1,9 +1,6 @@
 package com.jane.springaiintro.controllers;
 
-import com.jane.springaiintro.model.Answer;
-import com.jane.springaiintro.model.GetCapitalRequest;
-import com.jane.springaiintro.model.GetCapitalResponse;
-import com.jane.springaiintro.model.Question;
+import com.jane.springaiintro.model.*;
 import com.jane.springaiintro.service.OllamaAIService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +24,7 @@ public class QuestionController {
     }
 
     @PostMapping("/capitalWithInfo")
-    public Answer getCapitalWithInfo(@RequestBody GetCapitalRequest getCapitalRequest) {
+    public GetCapitalWithInfoResponse getCapitalWithInfo(@RequestBody GetCapitalRequest getCapitalRequest) {
         return service.getCapitalWithInfo(getCapitalRequest);
     }
 }
