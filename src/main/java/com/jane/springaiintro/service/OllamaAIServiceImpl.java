@@ -2,6 +2,7 @@ package com.jane.springaiintro.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jane.springaiintro.model.*;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
@@ -9,6 +10,9 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -16,9 +20,10 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
+@RequiredArgsConstructor
 @Service
 public class OllamaAIServiceImpl implements OllamaAIService {
 
@@ -27,18 +32,17 @@ public class OllamaAIServiceImpl implements OllamaAIService {
 
     private final ChatModel chatModel;
     private final ObjectMapper objectMapper;
+    private final SimpleVectorStore vectorStore;
+
     @Value("classpath:templates/get-capital-prompt.st")
     private Resource promptTemplateResource;
 
     @Value("classpath:templates/get-capital-prompt-with-info.st")
     private Resource promptTemplateInfoResource;
 
+    @Value("classpath:/templates/rag-prompt-template.st")
+    private Resource ragPromptTemplate;
 
-    @Autowired
-    public OllamaAIServiceImpl(ChatModel chatModel, ObjectMapper objectMapper) {
-        this.chatModel = chatModel;
-        this.objectMapper = objectMapper;
-    }
     @Override
     public String getAnswer(String message) {
         PromptTemplate promptTemplate = new PromptTemplate(message);
@@ -51,11 +55,13 @@ public class OllamaAIServiceImpl implements OllamaAIService {
 
     @Override
     public Answer getAnswer(Question question) {
-        PromptTemplate promptTemplate = new PromptTemplate((question.question()));
-        Prompt prompt = promptTemplate.create();
-
+        List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder()
+                .query(question.question()).topK(5).build());
+        List<String> currentList = documents.stream().map(Document::getText).toList();
+        PromptTemplate promptTemplate = new PromptTemplate(ragPromptTemplate);
+        Prompt prompt = promptTemplate.create(Map.of("input", question.question(), "documents", String.join("\n", currentList)));
+        currentList.forEach(System.out::println);
         ChatResponse response = chatModel.call(prompt);
-
 
         return new Answer(response.getResult().getOutput().getText());
     }

@@ -1,4 +1,4 @@
-# Spring AI Project
+# Spring AI Project (in progress)
 
 This project demonstrates how to integrate **Spring Boot with Spring AI** to build intelligent, LLM-powered backend services.
 
